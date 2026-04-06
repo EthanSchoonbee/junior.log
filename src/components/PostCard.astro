@@ -1,0 +1,43 @@
+---
+interface Props {
+  slug: string;
+  title: string;
+  excerptHtml: string;
+  searchText?: string;
+  author: string;
+  publishedAt: Date;
+  readingTime?: string;
+  tags: string[];
+}
+
+const { slug, title, excerptHtml, searchText = "", author, publishedAt, readingTime, tags } = Astro.props;
+const searchableText = [title, searchText, author, ...tags].join(" ").toLowerCase();
+---
+
+<article class="post-row" data-slug={slug} data-search={searchableText}>
+  <div class="post-row-content">
+    <h2><a href={`/posts/${slug}/`}>{title}</a></h2>
+    <div class="post-row-excerpt" set:html={excerptHtml} />
+    <p class="post-row-readmore-line">
+      <a class="post-row-readmore" href={`/posts/${slug}/`}>Continue reading…</a>
+    </p>
+    <div class="tag-row post-row-pills">
+      <span class="meta-pill">Author: {author}</span>
+      {tags.map((tag) => <a href={`/tags/${tag}/`}>{tag}</a>)}
+    </div>
+    <div class="post-row-meta-stack">
+      <div class="post-row-meta">
+        <span class="post-row-date-icon" aria-hidden="true">✎</span>
+        <time class="post-row-date" datetime={publishedAt.toISOString()}>
+          {publishedAt.toLocaleDateString("en-ZA", { year: "numeric", month: "long", day: "numeric" })}
+        </time>
+      </div>
+      {readingTime && (
+        <div class="post-row-meta">
+          <span class="post-row-date-icon" aria-hidden="true">◷</span>
+          <span class="post-reading-time">{readingTime}</span>
+        </div>
+      )}
+    </div>
+  </div>
+</article>

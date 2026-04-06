@@ -1,0 +1,117 @@
+---
+import {siteConfig} from "../site";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PostCard from "./PostCard.astro";
+import FeedSearch from "./FeedSearch.astro";
+import {getPageHref, getPaginationItems} from "../utils/feed.js";
+
+interface SearchPost {
+    slug: string;
+    data: {
+        title: string;
+        description: string;
+        author: string;
+        tags: string[];
+        publishedAt: Date;
+        readingTime?: string;
+    };
+    body: string;
+}
+
+interface PostEntry extends SearchPost {
+    excerptHtml: string;
+    searchText: string;
+}
+
+interface Props {
+    posts: PostEntry[];
+    currentPage?: number;
+    totalPages?: number;
+}
+
+const {posts, currentPage = 1, totalPages = 1} = Astro.props;
+const paginationItems = getPaginationItems(currentPage, totalPages);
+---
+
+<BaseLayout
+        title={currentPage === 1 ? "JuniorLog" : `Page ${currentPage} | JuniorLog`}
+        description="A personal blog for writing, notes, and experiments."
+        currentPath="/"
+        randomTheme={true}
+>
+    <hr class="page-separator"/>
+
+    <section class="intro">
+        <p class="intro-copy">
+            A personal blog about software, systems, design, notes, and whatever else seems worth writing down. Built to
+            be
+            calm, readable, and easy to keep updated from markdown.
+        </p>
+    </section>
+
+    <hr class="page-separator"/>
+
+    <FeedSearch listSelector="#home-post-list"/>
+
+    <section class="simple-section post-list-shell">
+        <div class="post-list" id="home-post-list">
+            {
+                posts.map((post) => (
+                        <PostCard
+                                slug={post.slug}
+                                title={post.data.title}
+                                excerptHtml={post.excerptHtml}
+                                searchText={post.searchText}
+                                author={post.data.author}
+                                publishedAt={post.data.publishedAt}
+                                readingTime={post.data.readingTime}
+                                tags={post.data.tags}
+                        />
+                ))
+            }
+        </div>
+    </section>
+
+    {totalPages > 1 && (
+            <nav class="feed-pagination" aria-label="Feed pagination">
+                {currentPage > 1 && (
+                        <a class="feed-pagination-link" href={getPageHref(currentPage - 1)}>
+                            Previous
+                        </a>
+                )}
+
+                {paginationItems.map((item) =>
+                    item.type === "page" ? (
+                            <a
+                                    class="feed-pagination-link"
+                                    href={getPageHref(item.page)}
+                                    aria-current={item.page === currentPage ? "page" : undefined}
+                            >
+                                {item.page}
+                            </a>
+                    ) : (
+                            <span class="feed-pagination-ellipsis" aria-hidden="true">…</span>
+                    )
+                )}
+
+                {currentPage < totalPages && (
+                        <a class="feed-pagination-link" href={getPageHref(currentPage + 1)}>
+                            Next
+                        </a>
+                )}
+            </nav>
+    )}
+
+    <hr class="page-separator feed-meta-separator"/>
+
+    <section class="feed-meta-links" aria-label="Feed links">
+        <nav class="feed-meta-nav" aria-label="Feed footer links">
+            {
+                siteConfig.footerLinks.map((link) => (
+                        <a href={link.href}>{link.label}</a>
+                ))
+            }
+        </nav>
+        <p class="feed-meta-copy">{siteConfig.footerCopyright}</p>
+    </section>
+</BaseLayout>

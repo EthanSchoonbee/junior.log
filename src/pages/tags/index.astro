@@ -1,0 +1,90 @@
+---
+import {getCollection} from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const posts = (await getCollection("posts", ({data}) => !data.draft)).sort(
+    (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf()
+);
+
+const tagCounts = Object.entries(
+    posts.reduce<Record<string, number>>((acc, post) => {
+        for (const tag of post.data.tags) {
+            acc[tag] = (acc[tag] ?? 0) + 1;
+        }
+        return acc;
+    }, {})
+).sort((a, b) => a[0].localeCompare(b[0]));
+
+const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+const activeLetters = new Set(tagCounts.map(([tag]) => tag.charAt(0).toUpperCase()));
+---
+
+<BaseLayout title="Tags | JuniorLog" currentPath="/tags/" randomTheme={true}>
+    <hr class="page-separator"/>
+
+    <section class="page-header">
+        <h1>Tags</h1>
+        <p>Browse posts by topic.</p>
+    </section>
+
+    <hr class="page-separator"/>
+
+    <nav class="tag-alpha-filter" aria-label="Filter tags alphabetically">
+        <button type="button" class="tag-alpha-button is-active" data-letter="all">All</button>
+        {
+            alphabet.map((letter) =>
+                activeLetters.has(letter) ? (
+                        <button type="button" class="tag-alpha-button" data-letter={letter}>{letter}</button>
+                ) : (
+                        <span aria-hidden="true">{letter}</span>
+                )
+            )
+        }
+    </nav>
+
+    <div class="tag-index" id="tag-index-list">
+        {
+            tagCounts.map(([tag, count]) => (
+                    <a class="tag-index-card" href={`/tags/${tag}/`} data-letter={tag.charAt(0).toUpperCase()}>
+                        <strong>{tag}</strong>
+                        <span>{count} post{count === 1 ? "" : "s"}</span>
+                    </a>
+            ))
+        }
+    </div>
+
+    <script is:inline>
+        const initTagFilter = () => {
+            const buttons = Array.from(document.querySelectorAll(".tag-alpha-button"));
+            const tags = Array.from(document.querySelectorAll("#tag-index-list .tag-index-card"));
+
+            if (!buttons.length || !tags.length) return;
+
+            const setActive = (letter) => {
+                buttons.forEach((button) => {
+                    if (!(button instanceof HTMLButtonElement)) return;
+                    button.classList.toggle("is-active", button.dataset.letter === letter);
+                });
+
+                tags.forEach((tag) => {
+                    if (!(tag instanceof HTMLElement)) return;
+                    const matches = letter === "all" || tag.dataset.letter === letter;
+                    tag.style.display = matches ? "" : "none";
+                });
+            };
+
+            buttons.forEach((button) => {
+                if (!(button instanceof HTMLButtonElement)) return;
+                button.addEventListener("click", () => setActive(button.dataset.letter ?? "all"));
+            });
+
+            setActive("all");
+        };
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initTagFilter, {once: true});
+        } else {
+            initTagFilter();
+        }
+    </script>
+</BaseLayout>

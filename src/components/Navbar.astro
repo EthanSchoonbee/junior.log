@@ -1,0 +1,90 @@
+---
+import { siteConfig } from "../site";
+import brandIcon from "../assets/junior-log.svg?raw";
+
+interface Props {
+  currentPath: string;
+}
+
+const { currentPath } = Astro.props;
+const navItems = siteConfig.nav;
+---
+
+<header class="topbar">
+  <a class="brand" href="/">
+    <span class="brand-icon" aria-hidden="true" set:html={brandIcon} />
+    <span>
+      <strong>{siteConfig.title}</strong>
+      <small>{siteConfig.tagline}</small>
+    </span>
+  </a>
+
+  <nav class="nav-links" aria-label="Primary">
+    {
+      navItems.map((item) => (
+        <a href={item.href} class:list={{ active: currentPath === item.href }}>
+          {item.label}
+        </a>
+      ))
+    }
+    <a href="#" id="shuffle-theme-link">Shuffle theme</a>
+    <a href="#" id="toggle-color-mode-link">Dark Mode</a>
+  </nav>
+</header>
+
+{
+  (
+    <script>
+      const shuffleThemeLink = document.querySelector("#shuffle-theme-link");
+      const toggleColorModeLink = document.querySelector("#toggle-color-mode-link");
+      if (shuffleThemeLink instanceof HTMLAnchorElement) {
+        shuffleThemeLink.addEventListener("click", (event) => {
+          event.preventDefault();
+          const palettes = window.__juniorThemePalettes;
+          const storageKey = window.__juniorThemeStorageKey;
+          const currentIndex = Number(window.__juniorThemeIndex ?? -1);
+
+          if (!Array.isArray(palettes) || !storageKey || palettes.length === 0) return;
+
+          let nextIndex = currentIndex;
+          if (palettes.length === 1) {
+            nextIndex = 0;
+          } else {
+            while (nextIndex === currentIndex) {
+              nextIndex = Math.floor(Math.random() * palettes.length);
+            }
+          }
+
+          sessionStorage.setItem(storageKey, String(nextIndex));
+          location.reload();
+        });
+      }
+
+      if (toggleColorModeLink instanceof HTMLAnchorElement) {
+        const syncModeLabel = () => {
+          const mode = window.__juniorThemeMode === "dark" ? "dark" : "light";
+          toggleColorModeLink.textContent = mode === "dark" ? "Light Mode" : "Dark Mode";
+        };
+
+        syncModeLabel();
+
+        toggleColorModeLink.addEventListener("click", (event) => {
+          event.preventDefault();
+
+          const storageKey = window.__juniorThemeModeStorageKey;
+          const currentMode = window.__juniorThemeMode === "dark" ? "dark" : "light";
+          const nextMode = currentMode === "dark" ? "light" : "dark";
+
+          if (!storageKey) return;
+
+          localStorage.setItem(storageKey, nextMode);
+          window.__juniorThemeMode = nextMode;
+          if (typeof window.__applyJuniorTheme === "function") {
+            window.__applyJuniorTheme();
+          }
+          syncModeLabel();
+        });
+      }
+    </script>
+  )
+}

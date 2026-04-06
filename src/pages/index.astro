@@ -1,0 +1,15 @@
+---
+import { getCollection } from "astro:content";
+import HomeFeedPage from "../components/HomeFeedPage.astro";
+import { buildPostEntries, POSTS_PER_PAGE } from "../utils/feed.js";
+
+const allPosts = (await getCollection("posts", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf()
+);
+
+const postEntries = buildPostEntries(allPosts);
+const totalPages = Math.max(1, Math.ceil(postEntries.length / POSTS_PER_PAGE));
+const posts = postEntries.slice(0, POSTS_PER_PAGE);
+---
+
+<HomeFeedPage posts={posts} currentPage={1} totalPages={totalPages} />

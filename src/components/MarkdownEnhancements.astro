@@ -1,0 +1,362 @@
+<script is:inline>
+    const CALLOUT_PATTERN = /^\[!([A-Z]+)\]([+-])?\s*([^\n\r]*)/i;
+    const normalizeCalloutType = (value) => {
+        const type = value.toLowerCase();
+        if (type === "hint") return "hint";
+        if (type === "info") return "info";
+        if (type === "tip") return "tip";
+        if (type === "note") return "note";
+        return "note";
+    };
+    const getCalloutLabel = (type) => {
+        if (type === "tip") return "Tip";
+        if (type === "hint") return "Hint";
+        if (type === "info") return "Info";
+        return "Note";
+    };
+    const getCalloutColors = (type) => {
+        const css = getComputedStyle(document.documentElement);
+        const pill = css.getPropertyValue("--page-pill-bg").trim() || "#efefef";
+        const surface = css.getPropertyValue("--page-surface").trim() || "#f3f3f3";
+        const line = css.getPropertyValue("--page-line").trim() || "#d7d7d7";
+        const heading = css.getPropertyValue("--page-heading").trim() || "#000000";
+        const link = css.getPropertyValue("--page-link").trim() || "#000000";
+        const text = css.getPropertyValue("--page-text").trim() || "#1d1d1d";
+        const bg = css.getPropertyValue("--page-bg").trim() || "#ffffff";
+        const soft = css.getPropertyValue("--page-soft").trim() || "#5e5e5e";
+
+        if (type === "tip") {
+            return { background: surface, borderLeft: link, border: line, text, badgeBg: link, badgeText: bg };
+        }
+
+        if (type === "hint") {
+            return { background: surface, borderLeft: link, border: line, text, badgeBg: link, badgeText: bg };
+        }
+
+        if (type === "info") {
+            return { background: pill, borderLeft: heading, border: line, text, badgeBg: pill, badgeText: heading };
+        }
+
+        return { background: "", borderLeft: line, border: line, text: soft, badgeBg: "transparent", badgeText: heading };
+    };
+    const upgradeCallouts = () => {
+        const blockquotes = document.querySelectorAll(".markdown-body blockquote");
+
+        for (const blockquote of blockquotes) {
+            if (blockquote.classList.contains("callout")) continue;
+
+            const firstParagraph = blockquote.querySelector("p");
+            const firstText = firstParagraph?.textContent?.trimStart() ?? "";
+            const match = firstText.match(CALLOUT_PATTERN);
+
+            if (!firstParagraph || !match) continue;
+
+            const [, rawType, collapse, rawTitle] = match;
+            const type = normalizeCalloutType(rawType);
+            const title = (rawTitle?.trim() || getCalloutLabel(type)).trim();
+            const colors = getCalloutColors(type);
+            const contentNode = blockquote.cloneNode(true);
+            const contentFirstParagraph = contentNode.querySelector("p");
+            if (contentFirstParagraph) {
+                contentFirstParagraph.innerHTML = contentFirstParagraph.innerHTML.replace(CALLOUT_PATTERN, "").trimStart();
+            }
+            const contentHtml = contentNode.innerHTML.trim();
+
+            const replacement = document.createElement("blockquote");
+            replacement.className = `callout callout-${type}`;
+            replacement.dataset.callout = type;
+            replacement.dataset.collapsible = collapse ? "true" : "false";
+            replacement.dataset.calloutTitle = title;
+            const isSimpleCallout = type === "note" || type === "tip";
+            replacement.style.padding = isSimpleCallout ? "1rem 1rem 1rem 1.15rem" : "1rem";
+            replacement.style.border = isSimpleCallout ? "0" : `1px solid ${colors.border}`;
+            replacement.style.borderLeft = `0.28rem solid ${colors.borderLeft}`;
+            replacement.style.marginLeft = "0";
+            replacement.style.color = colors.text;
+            if (colors.background && !isSimpleCallout) {
+                replacement.style.background = colors.background;
+            }
+            replacement.style.boxShadow =
+                isSimpleCallout ? "none" : "inset 0 0 0 1px color-mix(in srgb, var(--page-line) 22%, transparent)";
+            replacement.style.borderRadius = isSimpleCallout ? "0" : "0.35rem";
+
+            if (isSimpleCallout) {
+                replacement.style.borderLeft = "";
+                replacement.style.color = "";
+                replacement.style.background = "";
+                replacement.innerHTML = contentHtml;
+            } else {
+                replacement.innerHTML = `<div class="callout-title"><span class="callout-badge">${getCalloutLabel(
+                    type
+                )}</span><span>${title}</span></div><div class="callout-content">${contentHtml}</div>`;
+
+                const badge = replacement.querySelector(".callout-badge");
+                if (badge instanceof HTMLElement) {
+                    badge.style.background = colors.badgeBg;
+                    badge.style.color = colors.badgeText;
+                }
+            }
+
+            blockquote.replaceWith(replacement);
+        }
+    };
+
+    upgradeCallouts();
+    document.addEventListener("DOMContentLoaded", upgradeCallouts, {once: true});
+    window.addEventListener("load", upgradeCallouts, {once: true});
+    window.setTimeout(upgradeCallouts, 0);
+    window.setTimeout(upgradeCallouts, 120);
+</script>
+
+<script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+    const MERMAID_OVERFLOW_TOLERANCE = 48;
+    const getMermaidThemeVariables = () => {
+        const css = getComputedStyle(document.documentElement);
+        const line = css.getPropertyValue("--page-line").trim() || "#d7d7d7";
+        const text = css.getPropertyValue("--page-text").trim() || "#1d1d1d";
+        const heading = css.getPropertyValue("--page-heading").trim() || "#000000";
+        const surface = css.getPropertyValue("--page-surface").trim() || "#f5f5f5";
+        const bg = css.getPropertyValue("--page-bg").trim() || "#ffffff";
+
+        return {
+            background: bg,
+            mainBkg: surface,
+            secondBkg: bg,
+            tertiaryColor: bg,
+            primaryColor: surface,
+            primaryBorderColor: line,
+            primaryTextColor: heading,
+            secondaryColor: surface,
+            secondaryBorderColor: line,
+            secondaryTextColor: text,
+            tertiaryBorderColor: line,
+            tertiaryTextColor: text,
+            lineColor: line,
+            textColor: text,
+            nodeTextColor: heading,
+            edgeLabelBackground: bg,
+            clusterBkg: bg,
+            clusterBorder: line,
+            actorBorder: line,
+            actorBkg: surface,
+            actorTextColor: heading,
+            labelBoxBkgColor: bg,
+            labelBoxBorderColor: line,
+            labelTextColor: heading,
+            signalColor: text,
+            signalTextColor: text,
+            cScale0: surface,
+            cScale1: bg,
+            cScale2: surface
+        };
+    };
+
+    const configureMermaid = () => {
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: "base",
+            securityLevel: "loose",
+            themeVariables: getMermaidThemeVariables()
+        });
+    };
+
+    const getMermaidNaturalSize = (svgEl) => {
+        try {
+            const box = svgEl.getBBox();
+            if (box.width > 0 && box.height > 0) {
+                return {
+                    width: Math.ceil(box.width + 32),
+                    height: Math.ceil(box.height + 32)
+                };
+            }
+        } catch {
+        }
+
+        const viewBox = svgEl.viewBox?.baseVal;
+        return {
+            width: Math.ceil(viewBox?.width || svgEl.getBoundingClientRect().width || 1200),
+            height: Math.ceil(viewBox?.height || svgEl.getBoundingClientRect().height || 800)
+        };
+    };
+
+    configureMermaid();
+
+    const updateMermaidOverflow = (shell, toolbar, button, blockEl, preferredMode) => {
+        const requestedMode = preferredMode ?? shell.dataset.mode ?? "fit";
+        shell.dataset.mode = "actual";
+
+        requestAnimationFrame(() => {
+            const horizontalOverflow = blockEl.scrollWidth - blockEl.clientWidth;
+            const verticalOverflow = blockEl.scrollHeight - blockEl.clientHeight;
+            const overflows =
+                horizontalOverflow > MERMAID_OVERFLOW_TOLERANCE ||
+                verticalOverflow > MERMAID_OVERFLOW_TOLERANCE;
+
+            toolbar.hidden = !overflows;
+            const nextMode = overflows ? requestedMode : "actual";
+            shell.dataset.mode = nextMode;
+
+            if (button instanceof HTMLButtonElement) {
+                button.textContent = nextMode === "fit" ? "Expand" : "Collapse";
+                button.setAttribute("aria-pressed", String(nextMode === "actual"));
+            }
+        });
+    };
+
+    const enhanceCodeBlocks = () => {
+        const blocks = document.querySelectorAll('.markdown-body pre');
+
+        for (const pre of blocks) {
+            if (!(pre instanceof HTMLElement)) continue;
+            if (pre.dataset.language === "mermaid") continue;
+            if (pre.querySelector("code.language-mermaid")) continue;
+            if (pre.parentElement?.classList.contains("code-block-shell")) continue;
+
+            const shell = document.createElement("div");
+            shell.className = "code-block-shell";
+
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "code-copy-button";
+            button.textContent = "Copy";
+
+            button.addEventListener("click", async () => {
+                const code = pre.innerText;
+
+                try {
+                    await navigator.clipboard.writeText(code);
+                    button.textContent = "Copied";
+                    window.setTimeout(() => {
+                        button.textContent = "Copy";
+                    }, 1400);
+                } catch (error) {
+                    console.error("Code copy failed", error);
+                    button.textContent = "Failed";
+                    window.setTimeout(() => {
+                        button.textContent = "Copy";
+                    }, 1400);
+                }
+            });
+
+            pre.replaceWith(shell);
+            shell.append(button, pre);
+        }
+    };
+
+    const renderMermaidBlocks = async () => {
+        const blocks = document.querySelectorAll('pre[data-language="mermaid"], pre code.language-mermaid');
+
+        for (const block of blocks) {
+            const pre = block instanceof HTMLElement && block.tagName === "PRE" ? block : block.closest("pre");
+            if (!pre || pre.dataset.enhanced === "true") continue;
+
+            const source = pre.textContent ?? "";
+            const id = `mermaid-${crypto.randomUUID()}`;
+
+            try {
+                const {svg} = await mermaid.render(id, source);
+                const shell = document.createElement("div");
+                shell.className = "mermaid-shell";
+                shell.dataset.mode = "fit";
+                shell.dataset.source = source;
+                shell.innerHTML = `
+          <div class="mermaid-toolbar">
+            <button type="button" class="mermaid-toggle" aria-pressed="false">Actual size</button>
+          </div>
+          <div class="mermaid-block">${svg}</div>
+        `;
+
+                const button = shell.querySelector(".mermaid-toggle");
+                const toolbar = shell.querySelector(".mermaid-toolbar");
+                const svgEl = shell.querySelector("svg");
+                const blockEl = shell.querySelector(".mermaid-block");
+                if (svgEl instanceof SVGSVGElement) {
+                    const {width: naturalWidth, height: naturalHeight} = getMermaidNaturalSize(svgEl);
+                    shell.style.setProperty("--mermaid-natural-width", `${naturalWidth}px`);
+                    shell.style.setProperty("--mermaid-natural-height", `${naturalHeight}px`);
+
+                    if (
+                        blockEl instanceof HTMLDivElement &&
+                        toolbar instanceof HTMLDivElement &&
+                        button instanceof HTMLButtonElement
+                    ) {
+                        updateMermaidOverflow(shell, toolbar, button, blockEl, "fit");
+                    }
+                }
+
+                if (
+                    button instanceof HTMLButtonElement &&
+                    blockEl instanceof HTMLDivElement &&
+                    toolbar instanceof HTMLDivElement
+                ) {
+                    button.addEventListener("click", () => {
+                        const nextMode = shell.dataset.mode === "fit" ? "actual" : "fit";
+                        shell.dataset.mode = nextMode;
+                        button.textContent = nextMode === "fit" ? "Expand" : "Collapse";
+                        button.setAttribute("aria-pressed", String(nextMode === "actual"));
+                    });
+
+                    window.addEventListener("resize", () => updateMermaidOverflow(shell, toolbar, button, blockEl), {
+                        passive: true
+                    });
+                }
+
+                pre.replaceWith(shell);
+            } catch (error) {
+                console.error("Mermaid render failed", error);
+            }
+
+            pre.dataset.enhanced = "true";
+        }
+    };
+
+    const rerenderMermaidShells = async () => {
+        configureMermaid();
+        const shells = document.querySelectorAll(".mermaid-shell[data-source]");
+
+        for (const shell of shells) {
+            if (!(shell instanceof HTMLDivElement)) continue;
+            const source = shell.dataset.source ?? "";
+            if (!source) continue;
+
+            const id = `mermaid-${crypto.randomUUID()}`;
+
+            try {
+                const {svg} = await mermaid.render(id, source);
+                const blockEl = shell.querySelector(".mermaid-block");
+                const button = shell.querySelector(".mermaid-toggle");
+                const toolbar = shell.querySelector(".mermaid-toolbar");
+
+                if (!(blockEl instanceof HTMLDivElement)) continue;
+
+                const currentMode = shell.dataset.mode === "actual" ? "actual" : "fit";
+                blockEl.innerHTML = svg;
+
+                const svgEl = blockEl.querySelector("svg");
+                if (svgEl instanceof SVGSVGElement) {
+                    const {width: naturalWidth, height: naturalHeight} = getMermaidNaturalSize(svgEl);
+                    shell.style.setProperty("--mermaid-natural-width", `${naturalWidth}px`);
+                    shell.style.setProperty("--mermaid-natural-height", `${naturalHeight}px`);
+                }
+
+                if (
+                    button instanceof HTMLButtonElement &&
+                    toolbar instanceof HTMLDivElement &&
+                    blockEl instanceof HTMLDivElement
+                ) {
+                    updateMermaidOverflow(shell, toolbar, button, blockEl, currentMode);
+                }
+            } catch (error) {
+                console.error("Mermaid rerender failed", error);
+            }
+        }
+    };
+
+    enhanceCodeBlocks();
+    renderMermaidBlocks();
+    window.addEventListener("junior-theme-change", () => {
+        rerenderMermaidShells();
+    });
+</script>

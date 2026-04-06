@@ -1,0 +1,91 @@
+---
+import {getCollection, render} from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import MarkdownEnhancements from "../../components/MarkdownEnhancements.astro";
+
+export async function getStaticPaths() {
+    const posts = await getCollection("posts", ({data}) => !data.draft);
+    const sortedPosts = [...posts].sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+
+    return sortedPosts.map((post) => ({
+        params: {slug: post.slug},
+        props: {post, allPosts: sortedPosts}
+    }));
+}
+
+const {post, allPosts} = Astro.props;
+const {Content} = await render(post);
+const currentIndex = allPosts.findIndex((entry) => entry.slug === post.slug);
+const previousPost = currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : null;
+const nextPost = currentIndex > 0 ? allPosts[currentIndex - 1] : null;
+---
+
+<BaseLayout
+        title={`${post.data.title} | JuniorLog`}
+        description={post.data.description}
+        randomTheme={true}
+>
+    <hr class="page-separator"/>
+
+    <article class="post-shell">
+        <header class="post-header">
+            <h1>{post.data.title}</h1>
+        </header>
+
+        <div class="markdown-body">
+            <Content/>
+        </div>
+
+        <footer class="post-footer">
+            <div class="tag-row">
+                <span class="meta-pill">Author: {post.data.author}</span>
+                {post.data.tags.map((tag: string) => <a href={`/tags/${tag}/`}>{tag}</a>)}
+            </div>
+            <div class="post-row-meta-stack">
+                <p class="post-footer-meta post-row-meta">
+                    <span class="post-row-date-icon" aria-hidden="true">✎</span>
+                    <time datetime={post.data.publishedAt.toISOString()}>
+                        {post.data.publishedAt.toLocaleDateString("en-ZA", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric"
+                        })}
+                    </time>
+                </p>
+                {post.data.readingTime && (
+                        <p class="post-footer-meta post-row-meta">
+                            <span class="post-row-date-icon" aria-hidden="true">◷</span>
+                            <span class="post-reading-time">{post.data.readingTime}</span>
+                        </p>
+                )}
+            </div>
+            <p class="post-footer-link">
+                <a href="/">Back to all posts</a>
+            </p>
+        </footer>
+
+        <MarkdownEnhancements/>
+    </article>
+
+    <hr class="page-separator"/>
+
+    {(previousPost || nextPost) && (
+            <section class="post-pagination">
+                {previousPost ? (
+                        <a class="post-pagination-link" href={`/posts/${previousPost.slug}/`}>
+                            <span class="post-pagination-label">← Previous post</span>
+                            <strong>{previousPost.data.title}</strong>
+                        </a>
+                ) : (
+                        <div></div>
+                )}
+
+                {nextPost && (
+                        <a class="post-pagination-link align-right" href={`/posts/${nextPost.slug}/`}>
+                            <span class="post-pagination-label">Next post →</span>
+                            <strong>{nextPost.data.title}</strong>
+                        </a>
+                )}
+            </section>
+    )}
+</BaseLayout>

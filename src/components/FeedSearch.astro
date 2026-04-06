@@ -1,0 +1,60 @@
+---
+interface Props {
+    listSelector?: string;
+}
+
+const {listSelector = "#home-post-list"} = Astro.props;
+---
+
+<section class="feed-search" aria-label="Search posts">
+    <input
+            id="feed-search-input"
+            class="feed-search-input"
+            type="search"
+            placeholder="Search posts, tags, or notes..."
+            autocomplete="off"
+    />
+    <p class="feed-search-empty" id="feed-search-empty" hidden>No posts matched that query yet.</p>
+</section>
+
+<script define:vars={{listSelector}}>
+    const initFeedSearch = () => {
+        const input = document.querySelector("#feed-search-input");
+        const emptyState = document.querySelector("#feed-search-empty");
+        const list = document.querySelector(listSelector);
+
+        if (
+            !(input instanceof HTMLInputElement) ||
+                !(emptyState instanceof HTMLParagraphElement) ||
+                !(list instanceof HTMLElement)
+            ) {
+            return;
+            }
+
+        const rows = Array.from(list.querySelectorAll(".post-row"));
+
+        const update = () => {
+            const query = input.value.trim().toLowerCase();
+            let visibleCount = 0;
+
+            rows.forEach((row) => {
+                if (!(row instanceof HTMLElement)) return;
+                const haystack = row.dataset.search ?? "";
+                const matches = !query || haystack.includes(query);
+                row.hidden = !matches;
+                if (matches) visibleCount += 1;
+                });
+
+            emptyState.hidden = visibleCount !== 0;
+            };
+
+        input.addEventListener("input", update);
+        update();
+        };
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initFeedSearch, { once: true });
+            } else {
+            initFeedSearch();
+            }
+</script>

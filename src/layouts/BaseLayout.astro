@@ -1,0 +1,224 @@
+---
+import {siteConfig} from "../site";
+import Navbar from "../components/Navbar.astro";
+import "../styles/global.css";
+import faviconSvg from "../assets/junior-log.svg?raw";
+
+interface Props {
+    title: string;
+    description?: string;
+    currentPath?: string;
+    randomTheme?: boolean;
+}
+
+const {
+    title,
+    description = "A calm, developer-first blog for essays, notes, and experiments.",
+    currentPath = "/",
+    randomTheme = false
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>{title}</title>
+    <meta name="description" content={description}/>
+    <link id="site-favicon" rel="icon" type="image/svg+xml" href="/junior-log.svg"/>
+    {
+        randomTheme && (
+            <script define:vars={{faviconSvg}}>
+                const palettes = [
+                    {
+                        light: {
+                            "--page-bg": "#eef2ea",
+                            "--page-surface": "#e6eee3",
+                            "--page-text": "#27533f",
+                            "--page-soft": "#4b6c5c",
+                            "--page-heading": "#27533f",
+                            "--page-link": "#27533f",
+                            "--page-line": "#b8c8bb",
+                            "--page-code-bg": "#e1ebe0",
+                            "--page-pill-bg": "#e0eadf"
+                        },
+                        dark: {
+                            "--page-bg": "#0d1511",
+                            "--page-surface": "#13201a",
+                            "--page-text": "#d3e2d8",
+                            "--page-soft": "#98b3a3",
+                            "--page-heading": "#eef8f1",
+                            "--page-link": "#eef8f1",
+                            "--page-line": "#284034",
+                            "--page-code-bg": "#172720",
+                            "--page-pill-bg": "#182820"
+                        }
+                    },
+                    {
+                        light: {
+                            "--page-bg": "#eef3fa",
+                            "--page-surface": "#e7eef7",
+                            "--page-text": "#27405e",
+                            "--page-soft": "#576f89",
+                            "--page-heading": "#27405e",
+                            "--page-link": "#27405e",
+                            "--page-line": "#bfd0e6",
+                            "--page-code-bg": "#dfe8f4",
+                            "--page-pill-bg": "#dde7f2"
+                        },
+                        dark: {
+                            "--page-bg": "#0f141b",
+                            "--page-surface": "#141c26",
+                            "--page-text": "#d5dfea",
+                            "--page-soft": "#9aacc0",
+                            "--page-heading": "#f1f6fb",
+                            "--page-link": "#f1f6fb",
+                            "--page-line": "#293847",
+                            "--page-code-bg": "#18212c",
+                            "--page-pill-bg": "#19222d"
+                        }
+                    },
+                    {
+                        light: {
+                            "--page-bg": "#f4eee4",
+                            "--page-surface": "#efe6da",
+                            "--page-text": "#634b2e",
+                            "--page-soft": "#8a7257",
+                            "--page-heading": "#634b2e",
+                            "--page-link": "#634b2e",
+                            "--page-line": "#d8c7b3",
+                            "--page-code-bg": "#eadfce",
+                            "--page-pill-bg": "#e6dbc9"
+                        },
+                        dark: {
+                            "--page-bg": "#17120d",
+                            "--page-surface": "#211912",
+                            "--page-text": "#e0d3c4",
+                            "--page-soft": "#b09b83",
+                            "--page-heading": "#f6efe7",
+                            "--page-link": "#f6efe7",
+                            "--page-line": "#403226",
+                            "--page-code-bg": "#261e16",
+                            "--page-pill-bg": "#281f17"
+                        }
+                    },
+                    {
+                        light: {
+                            "--page-bg": "#f2ebf3",
+                            "--page-surface": "#ebe1ed",
+                            "--page-text": "#5b3b61",
+                            "--page-soft": "#7c5d82",
+                            "--page-heading": "#5b3b61",
+                            "--page-link": "#5b3b61",
+                            "--page-line": "#d4c0d8",
+                            "--page-code-bg": "#e4d7e7",
+                            "--page-pill-bg": "#e1d2e4"
+                        },
+                        dark: {
+                            "--page-bg": "#171119",
+                            "--page-surface": "#211724",
+                            "--page-text": "#dfd1e2",
+                            "--page-soft": "#ae94b3",
+                            "--page-heading": "#f5edf6",
+                            "--page-link": "#f5edf6",
+                            "--page-line": "#403045",
+                            "--page-code-bg": "#261b29",
+                            "--page-pill-bg": "#281d2b"
+                        }
+                    },
+                    {
+                        light: {
+                            "--page-bg": "#ffffff",
+                            "--page-surface": "#f3f3f3",
+                            "--page-text": "#1a1a1a",
+                            "--page-soft": "#666666",
+                            "--page-heading": "#000000",
+                            "--page-link": "#000000",
+                            "--page-line": "#d6d6d6",
+                            "--page-code-bg": "#f3f3f3",
+                            "--page-pill-bg": "#efefef"
+                        },
+                        dark: {
+                            "--page-bg": "#000000",
+                            "--page-surface": "#101010",
+                            "--page-text": "#ffffff",
+                            "--page-soft": "#c9c9c9",
+                            "--page-heading": "#ffffff",
+                            "--page-link": "#ffffff",
+                            "--page-line": "#2f2f2f",
+                            "--page-code-bg": "#101010",
+                            "--page-pill-bg": "#121212"
+                        }
+                    }
+                ];
+
+                const storageKey = "junior-log-main-theme";
+                const modeStorageKey = "junior-log-color-mode";
+                const themeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+                let index = Number(sessionStorage.getItem(storageKey));
+
+                if (!Number.isInteger(index) || index < 0 || index >= palettes.length) {
+                    index = Math.floor(Math.random() * palettes.length);
+                    sessionStorage.setItem(storageKey, String(index));
+                }
+
+                let mode = localStorage.getItem(modeStorageKey);
+                if (mode !== "light" && mode !== "dark") {
+                    mode = themeQuery.matches ? "dark" : "light";
+                    localStorage.setItem(modeStorageKey, mode);
+                }
+
+                window.__juniorThemePalettes = palettes;
+                window.__juniorThemeStorageKey = storageKey;
+                window.__juniorThemeModeStorageKey = modeStorageKey;
+                window.__juniorThemeIndex = index;
+                window.__juniorThemeMode = mode;
+
+                const updateFavicon = (color) => {
+                    const link = document.querySelector("#site-favicon");
+                    if (!(link instanceof HTMLLinkElement)) return;
+
+                    const svg = faviconSvg.replaceAll("currentColor", color);
+                    link.href = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+                };
+
+                const applyPalette = () => {
+                    const palette = palettes[index];
+                    const variant = mode === "dark" ? palette.dark : palette.light;
+
+                    for (const [key, value] of Object.entries(variant)) {
+                        document.documentElement.style.setProperty(key, value);
+                    }
+
+                    document.documentElement.style.colorScheme = mode;
+                    document.documentElement.dataset.colorMode = mode;
+                    updateFavicon(variant["--page-heading"]);
+                    window.__juniorThemeMode = mode;
+                    window.dispatchEvent(new CustomEvent("junior-theme-change", {detail: {mode, index}}));
+                };
+
+                applyPalette();
+                window.__applyJuniorTheme = () => {
+                    mode = localStorage.getItem(modeStorageKey) || mode;
+                    applyPalette();
+                };
+                </script>
+        )
+    }
+</head>
+<body>
+<div class="site-frame">
+    <div class="site-shell">
+        <Navbar currentPath={currentPath}/>
+        <main class="page-content">
+            <slot/>
+        </main>
+    </div>
+
+    <footer class="site-footer" aria-label="Site footer">
+        <a class="site-footer-brand" href="/">{siteConfig.title}</a>
+    </footer>
+</div>
+</body>
+</html>
