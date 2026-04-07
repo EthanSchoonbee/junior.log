@@ -13,8 +13,6 @@ readingTime: 7 min read
 This post is a working reference for the writing features supported by the blog. It covers normal markdown,
 Obsidian-style links and embeds, Mermaid diagrams, code blocks, and the custom callout styles.
 
-If you just want to start writing, copy the `templates/post-template.md` structure into a new file and begin there.
-
 ## Paragraphs and inline formatting
 
 You can write plain paragraphs, mix in **bold text**, *italic text*, and add `inline code` anywhere it helps.
