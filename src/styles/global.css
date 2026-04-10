@@ -635,7 +635,7 @@ html[data-color-mode="dark"] .markdown-body pre.astro-code span {
     border: 0;
     border-left-width: 0.28rem;
     border-left-style: solid;
-    border-left-color: var(--page-surface);
+    border-left-color: var(--page-line);
     border-radius: 0;
     box-shadow: none;
     color: var(--page-bg);
